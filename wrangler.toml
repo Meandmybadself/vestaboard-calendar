@@ -1,0 +1,11 @@
+name = "vestaboard-calendar"
+main = "src/index.js"
+compatibility_date = "2023-01-01"
+
+[triggers]
+crons = ["* * * * *"]  # Run every minute
+
+[vars]
+# These will be overridden by environment variables in production
+ICS_CALENDAR_URL = ""
+VESTABOARD_API_KEY = ""

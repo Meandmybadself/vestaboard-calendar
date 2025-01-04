@@ -1,0 +1,17 @@
+{
+  "name": "vestaboard-calendar",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker that updates Vestaboard with calendar events",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "ical.js": "^1.5.0",
+    "luxon": "^3.4.3"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
