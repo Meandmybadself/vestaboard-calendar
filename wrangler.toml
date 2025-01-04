@@ -9,3 +9,6 @@ crons = ["* * * * *"]  # Run every minute
 # These will be overridden by environment variables in production
 ICS_CALENDAR_URL = ""
 VESTABOARD_API_KEY = ""
+
+[logs]
+tail = true
