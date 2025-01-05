@@ -10,5 +10,5 @@ crons = ["* * * * *"]  # Run every minute
 ICS_CALENDAR_URL = ""
 VESTABOARD_API_KEY = ""
 
-[logs]
-tail = true
+[observability.logs]
+enabled = true
