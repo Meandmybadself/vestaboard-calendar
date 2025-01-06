@@ -1,6 +1,8 @@
 # Vestaboard Calendar
 
-Update your calendar to schedule messages on a Vestaboard.
+Use your calendar to schedule messages on a Vestaboard.
+
+![Vestaboard Calendar](vb-cal.jpg)
 
 A Cloudflare worker to automate the display of Vestaboard messages using your existing online calendar.
 
