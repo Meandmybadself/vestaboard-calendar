@@ -3,12 +3,7 @@ main = "src/index.js"
 compatibility_date = "2023-01-01"
 
 [triggers]
-crons = ["* * * * *"]  # Run every minute
-
-[vars]
-# These will be overridden by environment variables in production
-ICS_CALENDAR_URL = ""
-VESTABOARD_API_KEY = ""
+crons = ["* 6-21 * * *"]  # Run every minute between 6am and 9pm (6:00-21:59)
 
 [observability.logs]
 enabled = true

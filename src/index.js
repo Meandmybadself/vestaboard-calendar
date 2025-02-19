@@ -58,23 +58,50 @@ async function getCurrentEvent() {
 
   for (const vevent of vevents) {
     const event = new ICAL.Event(vevent);
-    const start = DateTime.fromJSDate(event.startDate.toJSDate());
-    const end = DateTime.fromJSDate(event.endDate.toJSDate());
+    
+    // Handle recurring events
+    if (event.isRecurring()) {
+      const expand = event.iterator();
+      const oneYearFromNow = DateTime.now().plus({ years: 1 }).toJSDate();
+      
+      // Expand recurrences for the next year
+      while (expand.next() && expand.last < oneYearFromNow) {
+        const occurrence = expand.last;
+        const start = DateTime.fromJSDate(occurrence);
+        const duration = event.duration;
+        const end = DateTime.fromJSDate(occurrence.plus(duration));
 
-    console.log('Checking event:', event.summary);
-    console.log('Event start:', start.toISO());
-    console.log('Event end:', end.toISO());
+        if (now >= start && now <= end) {
+          currentEvent = {
+            summary: event.summary,
+            description: event.description,
+            start: occurrence,
+            end: occurrence.plus(duration),
+            isRecurring: true
+          };
+          console.log('Found current recurring event:', event.summary);
+          break;
+        }
+      }
+    } else {
+      // Handle non-recurring events
+      const start = DateTime.fromJSDate(event.startDate.toJSDate());
+      const end = DateTime.fromJSDate(event.endDate.toJSDate());
 
-    if (now >= start && now <= end) {
-      currentEvent = {
-        summary: event.summary,
-        description: event.description,
-        start: event.startDate.toJSDate(),
-        end: event.endDate.toJSDate()
-      };
-      console.log('Found current event:', event.summary);
-      break;
+      if (now >= start && now <= end) {
+        currentEvent = {
+          summary: event.summary,
+          description: event.description,
+          start: event.startDate.toJSDate(),
+          end: event.endDate.toJSDate(),
+          isRecurring: false
+        };
+        console.log('Found current non-recurring event:', event.summary);
+        break;
+      }
     }
+
+    if (currentEvent) break;
   }
 
   return currentEvent;
@@ -87,6 +114,12 @@ async function handleCalendarCheck(env) {
   globalThis.VESTABOARD_API_KEY = env.VESTABOARD_API_KEY;
   globalThis.VESTABOARD_COMPOSE_URL = 'https://vbml.vestaboard.com/compose';
   globalThis.VESTABOARD_API_URL = 'https://rw.vestaboard.com/';
+
+  if (!ICS_CALENDAR_URL || !VESTABOARD_API_KEY) {
+    console.error('ICS_CALENDAR_URL or VESTABOARD_API_KEY is not set');
+    return { success: false, error: 'ICS_CALENDAR_URL or VESTABOARD_API_KEY is not set' };
+  }
+  
 
   try {
     const currentEvent = await getCurrentEvent();
@@ -106,7 +139,7 @@ async function handleCalendarCheck(env) {
 }
 
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(_, env, __) {
     const result = await handleCalendarCheck(env);
     return new Response(JSON.stringify(result, null, 2), {
       headers: { 
@@ -117,7 +150,7 @@ export default {
     });
   },
 
-  async scheduled(event, env, ctx) {
+  async scheduled(_, env, __) {
     await handleCalendarCheck(env);
   }
 }; 

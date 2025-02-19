@@ -47,6 +47,8 @@ ICS_CALENDAR_URL=https://calendar.google.com/calendar/ical/your_calendar_id%40gr
 VESTABOARD_API_KEY=replace_with_your_api_key
 ```
 
+
+
 ### 4. Test the worker locally
 
 ```bash
