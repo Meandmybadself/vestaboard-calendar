@@ -52,36 +52,55 @@ async function getCurrentEvent() {
   const comp = new ICAL.Component(jcalData);
   const vevents = comp.getAllSubcomponents('vevent');
   const now = DateTime.now();
+  const oneYearFromNow = DateTime.now().plus({ years: 1 }).toJSDate();
   console.log('Current time:', now.toISO());
 
   let currentEvent = null;
 
   for (const vevent of vevents) {
     const event = new ICAL.Event(vevent);
+    console.log('Checking event:', event.summary, 'Recurring:', event.isRecurring());
     
-    // Handle recurring events
     if (event.isRecurring()) {
       const expand = event.iterator();
-      const oneYearFromNow = DateTime.now().plus({ years: 1 }).toJSDate();
+      let iteration = 0;
+      const maxIterations = 100; // Prevent infinite loops
       
-      // Expand recurrences for the next year
-      while (expand.next() && expand.last < oneYearFromNow) {
-        const occurrence = expand.last;
-        const start = DateTime.fromJSDate(occurrence);
-        const duration = event.duration;
-        const end = DateTime.fromJSDate(occurrence.plus(duration));
-
+      let nextOccurrence = expand.next();
+      
+      while (nextOccurrence && iteration < maxIterations) {
+        // Convert ICAL.Time to JavaScript Date
+        const occurrenceDate = nextOccurrence.toJSDate();
+        const start = DateTime.fromJSDate(occurrenceDate);
+        const durationMs = event.duration.toSeconds() * 1000;
+        const end = DateTime.fromJSDate(new Date(occurrenceDate.getTime() + durationMs));
+        
         if (now >= start && now <= end) {
           currentEvent = {
             summary: event.summary,
             description: event.description,
-            start: occurrence,
-            end: occurrence.plus(duration),
+            start: occurrenceDate,
+            end: new Date(occurrenceDate.getTime() + durationMs),
             isRecurring: true
           };
           console.log('Found current recurring event:', event.summary);
           break;
         }
+
+        if (now > end && start > now.minus({ years: 1 })) {
+          nextOccurrence = expand.next();
+          iteration++;
+        } else if (now < start) {
+          break;
+        } else {
+          expand.jump(now.minus({ months: 1 }).toJSDate());
+          nextOccurrence = expand.next();
+          iteration++;
+        }
+      }
+      
+      if (iteration >= maxIterations) {
+        console.warn(`Reached maximum iterations for recurring event: ${event.summary}`);
       }
     } else {
       // Handle non-recurring events
