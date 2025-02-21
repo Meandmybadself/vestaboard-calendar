@@ -49,44 +49,113 @@ async function getCurrentEvent() {
   console.log('Calendar data fetched successfully');
 
   const jcalData = ICAL.parse(icsData);
+  if (!jcalData) {
+    console.error('Failed to parse ICS data');
+    return null;
+  }
+  
   const comp = new ICAL.Component(jcalData);
   const vevents = comp.getAllSubcomponents('vevent');
+  console.log('Found events:', {
+    totalEvents: vevents.length,
+    eventSummaries: vevents.map(v => new ICAL.Event(v).summary)
+  });
   const now = DateTime.now();
-  console.log('Current time:', now.toISO());
+  console.log('Current server time:', {
+    iso: now.toISO(),
+    zone: now.zoneName,
+    offset: now.offset
+  });
 
   let currentEvent = null;
 
   for (const vevent of vevents) {
     const event = new ICAL.Event(vevent);
+    if (event.summary === 'New!!') {
+      console.log('\nChecking event:', {
+        summary: event.summary,
+        isRecurring: event.isRecurring(),
+        startDate: event.startDate?.toJSDate().toISOString(),
+        endDate: event.endDate?.toJSDate().toISOString()
+      });
+    }
     
-    // Handle recurring events
     if (event.isRecurring()) {
       const expand = event.iterator();
-      const oneYearFromNow = DateTime.now().plus({ years: 1 }).toJSDate();
+      let iteration = 0;
+      const maxIterations = 100;
+      if (event.summary === 'New!!') {
+        console.log('Processing recurring event:', {
+          summary: event.summary,
+          iterator: !!expand,
+          recurrenceRules: event.component.getAllProperties('rrule').map(rule => rule.toJSON())
+        });
+      }
       
-      // Expand recurrences for the next year
-      while (expand.next() && expand.last < oneYearFromNow) {
-        const occurrence = expand.last;
-        const start = DateTime.fromJSDate(occurrence);
-        const duration = event.duration;
-        const end = DateTime.fromJSDate(occurrence.plus(duration));
+      let nextOccurrence = expand.next();
+      if (event.summary === 'New!!') {
+        console.log('First occurrence:', {
+          hasNextOccurrence: !!nextOccurrence,
+          nextDate: nextOccurrence?.toJSDate()?.toISOString()
+        });
+      }
+      
+      while (nextOccurrence && iteration < maxIterations) {
+        const occurrenceDate = nextOccurrence.toJSDate();
+        const start = DateTime.fromJSDate(occurrenceDate);
+        const durationMs = event.duration.toSeconds() * 1000;
+        const end = DateTime.fromJSDate(new Date(occurrenceDate.getTime() + durationMs));
+        
+        if (event.summary === 'New!!') {
+          console.log('Checking recurring occurrence:', {
+            start: start.toISO(),
+            end: end.toISO(),
+          isNowAfterStart: now >= start,
+          isNowBeforeEnd: now <= end,
+            durationMs
+          });
+        }
 
         if (now >= start && now <= end) {
           currentEvent = {
             summary: event.summary,
             description: event.description,
-            start: occurrence,
-            end: occurrence.plus(duration),
+            start: occurrenceDate,
+            end: new Date(occurrenceDate.getTime() + durationMs),
             isRecurring: true
           };
           console.log('Found current recurring event:', event.summary);
           break;
         }
+
+        if (now > end && start > now.minus({ years: 1 })) {
+          // console.log('Event ended, checking next occurrence');
+          nextOccurrence = expand.next();
+          iteration++;
+        } else if (now < start) {
+          //console.log('Event is in future, skipping');
+          break;
+        } else {
+          console.log('Jumping back one month to find relevant occurrences');
+          expand.jump(now.minus({ months: 1 }).toJSDate());
+          nextOccurrence = expand.next();
+          iteration++;
+        }
+      }
+      
+      if (iteration >= maxIterations) {
+        console.warn(`Reached maximum iterations for recurring event: ${event.summary}`);
       }
     } else {
-      // Handle non-recurring events
       const start = DateTime.fromJSDate(event.startDate.toJSDate());
       const end = DateTime.fromJSDate(event.endDate.toJSDate());
+      
+      console.log('Checking non-recurring event times:', {
+        start: start.toISO(),
+        end: end.toISO(),
+        isNowAfterStart: now >= start,
+        isNowBeforeEnd: now <= end
+      });
 
       if (now >= start && now <= end) {
         currentEvent = {
