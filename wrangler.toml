@@ -1,9 +1,0 @@
-name = "vestaboard-calendar"
-main = "src/index.js"
-compatibility_date = "2023-01-01"
-
-[triggers]
-crons = ["* 6-21 * * *"]  # Run every minute between 6am and 9pm (6:00-21:59)
-
-[observability.logs]
-enabled = true
