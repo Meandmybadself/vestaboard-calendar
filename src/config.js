@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 
-// Default to every 5 minutes, 6am to 10pm
-const DEFAULT_CRON_SCHEDULE = '*/5 6-22 * * *';
+// Default to every 1 minute, 6am to 10pm
+const DEFAULT_CRON_SCHEDULE = '*/1 6-22 * * *';
 
 export const loadConfig = () => {
   console.log('Loading configuration...');
@@ -10,6 +10,10 @@ export const loadConfig = () => {
     ICS_CALENDAR_URL: process.env.ICS_CALENDAR_URL,
     VESTABOARD_API_KEY: process.env.VESTABOARD_API_KEY,
     CRON_SCHEDULE: process.env.CRON_SCHEDULE || DEFAULT_CRON_SCHEDULE,
+    OPENWEATHER_API_KEY: process.env.OPENWEATHER_API_KEY,
+    OPENWEATHER_LAT: process.env.OPENWEATHER_LAT,
+    OPENWEATHER_LON: process.env.OPENWEATHER_LON,
+    STATE_STORAGE_PATH: process.env.STATE_STORAGE_PATH || './vestaboard-state.json',
   };
 
   // Validate required config
@@ -28,8 +32,15 @@ export const loadConfig = () => {
     process.exit(1);
   }
 
+  // Warn about optional weather config
+  if (!config.OPENWEATHER_API_KEY || !config.OPENWEATHER_LAT || !config.OPENWEATHER_LON) {
+    console.warn('WARNING: OpenWeatherMap configuration incomplete. WEATHER keyword will not work.');
+    console.warn('Set OPENWEATHER_API_KEY, OPENWEATHER_LAT, and OPENWEATHER_LON to enable weather features.');
+  }
+
   console.log('Configuration loaded successfully.');
   console.log(`Using cron schedule: ${config.CRON_SCHEDULE}`);
+  console.log(`State storage path: ${config.STATE_STORAGE_PATH}`);
 
   return config;
 }; 

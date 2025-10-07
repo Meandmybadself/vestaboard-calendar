@@ -1,23 +1,40 @@
 import cron from 'node-cron';
 import { getCurrentEvent } from './calendar.js';
 import { updateBoard } from './vestaboard.js';
+import { resolveDynamicContent } from './content-providers/index.js';
 
 const performCalendarCheck = async (config) => {
   console.log('Starting scheduled calendar check...');
-  const { ICS_CALENDAR_URL, VESTABOARD_API_KEY } = config;
+  const { ICS_CALENDAR_URL, VESTABOARD_API_KEY, STATE_STORAGE_PATH } = config;
 
   try {
     const currentEvent = await getCurrentEvent(ICS_CALENDAR_URL);
 
     if (currentEvent) {
-      console.log('Current event found, updating board:', currentEvent.summary);
+      console.log('Current event found:', currentEvent.summary);
+
       // Use description if available, otherwise fallback to summary
-      const message = currentEvent.description || currentEvent.summary;
-      const updateResult = await updateBoard(message, VESTABOARD_API_KEY);
+      let message = currentEvent.description || currentEvent.summary;
+
+      // Check if the message is a dynamic content keyword
+      const resolvedMessage = await resolveDynamicContent(message, config);
+
+      // Check if this is an action command (SAVE/RESTORE) that shouldn't update the board
+      if (typeof resolvedMessage === 'object' && resolvedMessage.skipBoardUpdate) {
+        const action = resolvedMessage.action;
+        if (resolvedMessage.error) {
+          console.error(`${action.toUpperCase()} command failed:`, resolvedMessage.error);
+          return { success: false, error: resolvedMessage.error };
+        }
+        console.log(`${action.toUpperCase()} command completed successfully`);
+        return { success: true, eventFound: true, eventSummary: currentEvent.summary, action };
+      }
+
+      console.log('Updating board with resolved content');
+      const updateResult = await updateBoard(resolvedMessage, VESTABOARD_API_KEY);
 
       if (!updateResult.success) {
         console.error('Failed to update Vestaboard:', updateResult.error);
-        // Decide if this should be a fatal error for the check
         return { success: false, error: `Failed to update Vestaboard: ${updateResult.error}` };
       }
 
@@ -25,12 +42,9 @@ const performCalendarCheck = async (config) => {
       return { success: true, eventFound: true, eventSummary: currentEvent.summary };
     } else {
       console.log('No current event found. Calendar check finished.');
-      // Optionally, clear the board or display a default message here
-      // e.g., await updateBoard("No events scheduled", VESTABOARD_API_KEY);
       return { success: true, eventFound: false };
     }
   } catch (error) {
-    // Catch errors from getCurrentEvent or potential issues before updateBoard
     console.error('Error during calendar check:', error);
     return { success: false, error: error.message };
   }
