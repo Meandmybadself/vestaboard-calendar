@@ -10,9 +10,14 @@ A Node.js application to automate the display of Vestaboard messages using your 
 
 - **Calendar Integration** - Display static messages from calendar event titles/descriptions
 - **Dynamic Content Providers**:
-  - `WEATHER` - Display current weather forecast (temp, precipitation, air quality)
-  - `LUNCH` - Display today's school lunch menu
+  - `WEATHER` - Display current weather forecast (temp, precipitation, air quality using OpenWeatherMap)
+  - `LUNCH` - Display today's school lunch menu (using https://github.com/Meandmybadself/mealviewer-to-ICS)
   - `URL:https://example.com` - Fetch and display content from any URL
+  - **Color Patterns** - Display colorful patterns using Vestaboard's color tiles:
+    - `COLOR_RANDOM` - Random colors for each tile
+    - `COLOR_VERTICAL` - Solid color columns
+    - `COLOR_HORIZONTAL` - Solid color rows
+    - `COLOR_DIAGONAL` - Diagonal color patterns
 - **State Management**:
   - `SAVE` - Save current board state for later restoration
   - `RESTORE` - Restore previously saved board state
@@ -100,6 +105,16 @@ Create an event with title: `URL:https://api.example.com/message`
 
 Fetches and displays the response from the specified URL.
 
+### Color Patterns
+Create events with these titles to display colorful patterns:
+
+- **`COLOR_RANDOM`** - Each tile displays a random color
+- **`COLOR_VERTICAL`** - Each column displays a solid random color
+- **`COLOR_HORIZONTAL`** - Each row displays a solid random color  
+- **`COLOR_DIAGONAL`** - Colors follow diagonal patterns across the board
+
+*Uses Vestaboard's 8 color tiles: Red, Orange, Yellow, Green, Blue, Violet, Black, and Filled*
+
 ### State Management
 - **Save current state**: Create event with title `SAVE`
 - **Restore saved state**: Create event with title `RESTORE`
@@ -110,9 +125,11 @@ This allows you to save the current board display and restore it later.
 
 1. **8:00 AM** - Event titled `SAVE` (saves current board state)
 2. **8:01 AM** - Event titled `WEATHER` (shows weather forecast)
-3. **8:15 AM** - Event titled `RESTORE` (restores saved state)
-4. **12:00 PM** - Event titled `LUNCH` (shows school lunch menu)
-5. **3:00 PM** - Event titled `URL:https://myapi.com/quote` (shows custom content)
+3. **8:15 AM** - Event titled `COLOR_RANDOM` (displays random color pattern)
+4. **8:30 AM** - Event titled `RESTORE` (restores saved state)
+5. **12:00 PM** - Event titled `LUNCH` (shows school lunch menu)
+6. **3:00 PM** - Event titled `URL:https://myapi.com/quote` (shows custom content)
+7. **6:00 PM** - Event titled `COLOR_DIAGONAL` (displays diagonal color pattern)
 
 ## License
 

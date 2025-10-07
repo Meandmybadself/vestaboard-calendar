@@ -26,7 +26,9 @@ export const getLunchContent = async () => {
 
       // Check if event is today
       if (eventStart.equals(today)) {
-        const lunchMenu = event.summary || event.description || 'Menu not available';
+        let lunchMenu = event.description || event.summary || 'Menu not available';
+        // Remove HTML tags
+        lunchMenu = lunchMenu.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
         console.log('Lunch menu found for today');
         return `Today's Lunch\n\n${lunchMenu}`;
       }

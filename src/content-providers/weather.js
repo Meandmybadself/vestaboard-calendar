@@ -1,4 +1,5 @@
 const OPENWEATHER_API_URL = 'https://api.openweathermap.org/data/3.0/onecall';
+const AIR_QUALITY_API_URL = 'https://api.openweathermap.org/data/2.5/air_pollution';
 
 export const getWeatherContent = async (config) => {
   const { OPENWEATHER_API_KEY, OPENWEATHER_LAT, OPENWEATHER_LON } = config;
@@ -9,16 +10,20 @@ export const getWeatherContent = async (config) => {
   }
 
   try {
-    const url = `${OPENWEATHER_API_URL}?lat=${OPENWEATHER_LAT}&lon=${OPENWEATHER_LON}&appid=${OPENWEATHER_API_KEY}&units=imperial&exclude=minutely,hourly,alerts`;
+    const weatherUrl = `${OPENWEATHER_API_URL}?lat=${OPENWEATHER_LAT}&lon=${OPENWEATHER_LON}&appid=${OPENWEATHER_API_KEY}&units=imperial&exclude=minutely,hourly,alerts`;
+    const airQualityUrl = `${AIR_QUALITY_API_URL}?lat=${OPENWEATHER_LAT}&lon=${OPENWEATHER_LON}&appid=${OPENWEATHER_API_KEY}`;
 
     console.log('Fetching weather data...');
-    const response = await fetch(url);
+    const [weatherResponse, airQualityResponse] = await Promise.all([
+      fetch(weatherUrl),
+      fetch(airQualityUrl)
+    ]);
 
-    if (!response.ok) {
-      throw new Error(`Weather API error: ${response.status}`);
+    if (!weatherResponse.ok) {
+      throw new Error(`Weather API error: ${weatherResponse.status}`);
     }
 
-    const data = await response.json();
+    const data = await weatherResponse.json();
     const today = data.daily[0];
     const current = data.current;
 
@@ -26,7 +31,13 @@ export const getWeatherContent = async (config) => {
     const lowTemp = Math.round(today.temp.min);
     const highTemp = Math.round(today.temp.max);
     const precipitation = Math.round((today.pop || 0) * 100);
-    const aqi = current.air_quality?.aqi || 'N/A';
+
+    // Get air quality data
+    let aqi = 'N/A';
+    if (airQualityResponse.ok) {
+      const airQualityData = await airQualityResponse.json();
+      aqi = airQualityData.list[0]?.main?.aqi || 'N/A';
+    }
 
     // Build message for Vestaboard
     const message = `Today's Weather\n\nLow: ${lowTemp}°F\nHigh: ${highTemp}°F\nPrecip: ${precipitation}%\nAir Quality: ${aqi}`;

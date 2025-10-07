@@ -1,6 +1,7 @@
 import { getWeatherContent } from './weather.js';
 import { getLunchContent } from './lunch.js';
 import { getUrlContent } from './url-fetcher.js';
+import { getColorContent } from './colors.js';
 import { getCurrentState, saveCurrentState, restoreState } from '../storage.js';
 
 /**
@@ -53,6 +54,22 @@ export const resolveDynamicContent = async (eventTitle, config) => {
         return { action: 'restore', skipBoardUpdate: true };
       }
       return { action: 'restore', skipBoardUpdate: true, error: 'Failed to restore state' };
+
+    case 'COLOR_RANDOM':
+      console.log('Detected COLOR_RANDOM content provider');
+      return await getColorContent('COLOR_RANDOM');
+
+    case 'COLOR_VERTICAL':
+      console.log('Detected COLOR_VERTICAL content provider');
+      return await getColorContent('COLOR_VERTICAL');
+
+    case 'COLOR_HORIZONTAL':
+      console.log('Detected COLOR_HORIZONTAL content provider');
+      return await getColorContent('COLOR_HORIZONTAL');
+
+    case 'COLOR_DIAGONAL':
+      console.log('Detected COLOR_DIAGONAL content provider');
+      return await getColorContent('COLOR_DIAGONAL');
 
     default:
       // Not a dynamic content keyword, return original title
