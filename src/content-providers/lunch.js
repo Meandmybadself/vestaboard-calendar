@@ -29,7 +29,7 @@ export const getLunchContent = async () => {
         let lunchMenu = event.description || event.summary || 'Menu not available';
         // Remove HTML tags
         lunchMenu = lunchMenu.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '');
-        let lunchMenuSplit = lunchMenu.split('ALTERNATE');
+        let lunchMenuSplit = lunchMenu.split(/alternate/i);
         lunchMenu = lunchMenuSplit[0];
         console.log('Lunch menu found for today');
         return `Today's Lunch\n\n${lunchMenu}`;

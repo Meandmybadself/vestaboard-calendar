@@ -1,7 +1,7 @@
 import ICAL from 'ical.js';
 import { DateTime } from 'luxon';
 
-const MAX_RECURRENCE_ITERATIONS = 100;
+const MAX_RECURRENCE_ITERATIONS = 10000;
 
 const parseIcsData = (icsData) => {
   try {
@@ -20,13 +20,14 @@ const parseIcsData = (icsData) => {
 const checkRecurringEvent = (event, iterator, now) => {
   let iteration = 0;
   let nextOccurrenceTime = iterator.next();
+  const buffer = 30000 // 30 seconds
 
   while (nextOccurrenceTime && iteration < MAX_RECURRENCE_ITERATIONS) {
-    const occurrenceDate = nextOccurrenceTime.toJSDate();
+    const occurrenceDate = new Date(nextOccurrenceTime.toJSDate().getTime() - buffer);
     const start = DateTime.fromJSDate(occurrenceDate);
     const durationSeconds = event.duration ? event.duration.toSeconds() : 0;
     const durationMs = durationSeconds * 1000;
-    const end = DateTime.fromJSDate(new Date(occurrenceDate.getTime() + durationMs));
+    const end = DateTime.fromJSDate(new Date(occurrenceDate.getTime() + durationMs + buffer));
 
     if (now >= start && now <= end) {
       return {
