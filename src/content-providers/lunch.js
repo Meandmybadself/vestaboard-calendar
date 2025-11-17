@@ -1,6 +1,7 @@
 import ICAL from 'ical.js';
 import { DateTime } from 'luxon';
 
+// This should be changed to the school lunch ICS URL
 const SCHOOL_LUNCH_ICS_URL = 'https://mealcal.meandmybadself.com/?schoolId=EisenhowerElementaryMN&meal=Lunch';
 
 export const getLunchContent = async () => {
